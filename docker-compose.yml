@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. The Application Server (main.py)
+  app:
+    build: ./Project_L2  # Path to the folder with the Dockerfile
+    ports:
+      - "8000:8000" # Exposes your app's API and the mock APIs
+    volumes:
+      # Mounts the chroma_db folder to persist the vector store
+      - ./Project_L2/chroma_db:/app/chroma_db
+      # Mounts the data folder so setup.py can read it
+      - ./Project_L2/data:/app/data
+    environment:
+      # Tells the app how to find the Ollama service
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - MODEL_NAME=gemma3:1b # The model specified in main.py
+    depends_on:
+      - ollama # Waits for ollama to start
+    tty: true # Keeps the container running
+    stdin_open: true # Keeps the container running
+
+  # 2. The LLM Service (Ollama)
+  ollama:
+    image: ollama/ollama
+    volumes:
+      # Persists the downloaded LLM models
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434" # Good for testing the LLM directly
+
+volumes:
+  ollama_data: # Defines the persistent volume for Ollama
